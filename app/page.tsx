@@ -1,10 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useActionState, useEffect } from 'react'
+import Form from "next/form"
 import { Menu, X, Trophy, Award, Users, Mail, Phone, MapPin, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { submitContactMessage } from './actions/contactAction'
+import { toast } from 'sonner'
+import { contactMessageState } from './schema'
 
 export default function Home() {
+  const [formState, formAction, pending] = useActionState<contactMessageState, FormData>(submitContactMessage, {
+    values: {
+      name: '',
+      email: '',
+      message: '',
+      phoneNumber: ''
+    },
+    errors: null,
+    success: false,
+    submittedAt: null
+  })
+  const [showSuccess, setShowSuccess] = useState(false)
+  useEffect(() => {
+    if (formState.success && formState.submittedAt) {
+      setShowSuccess(true)
+      const timer = setTimeout(() => {
+        setShowSuccess(false)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [formState.submittedAt])
+
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const scrollToSection = (id: string) => {
@@ -460,7 +489,7 @@ export default function Home() {
                   <div>
                     <h4 className="font-semibold mb-1">Location</h4>
                     <p className="text-muted-foreground">
-                      Lancha-10,<br />
+                      Lancha Falcha-10,<br />
                       Bhaktapur
                     </p>
                   </div>
@@ -469,36 +498,70 @@ export default function Home() {
             </div>
 
             <div className="border border-border rounded-lg p-8 bg-card/50">
-              <h3 className="text-2xl font-bold mb-6">Quick Contact Form</h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Name</label>
-                  <input
-                    type="text"
-                    placeholder="Your name"
-                    className="w-full px-4 py-2 rounded-md bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+              <h3 className="text-2xl font-bold mb-6">Contact Form</h3>
+              {showSuccess && (
+                <div className="p-4 mb-6 text-sm text-red-700 bg-green-100 rounded-lg" role="alert">
+                  Your message has been sent successfully!
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
-                    className="w-full px-4 py-2 rounded-md bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Message</label>
-                  <textarea
-                    placeholder="Tell me about your goals..."
-                    rows={4}
-                    className="w-full px-4 py-2 rounded-md bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                  />
-                </div>
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Send Message
-                </Button>
-              </form>
+              )}
+              <Form action={formAction} className="space-y-4">
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel className="block text-sm font-medium mb-2">Name</FieldLabel>
+                    <Input
+                      type="text"
+                      name='name'
+                      placeholder="Your name"
+                      className="w-full px-4 py-2 rounded-md bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    {formState.errors?.name && (
+                      <FieldError>{formState.errors.name}</FieldError>
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel className="block text-sm font-medium mb-2">Email</FieldLabel>
+                    <Input
+                      type="email"
+                      name="email"
+                      disabled={pending}
+                      placeholder="your@email.com"
+                      className="w-full px-4 py-2 rounded-md bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    {formState.errors?.email && (
+                      <FieldError>{formState.errors.email}</FieldError>
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel className="block text-sm font-medium mb-2">Phone</FieldLabel>
+                    <Input
+                      type="tel"
+                      name="phoneNumber"
+                      disabled={pending}
+                      placeholder="your phone number"
+                      className="w-full px-4 py-2 rounded-md bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    {formState.errors?.phoneNumber && (
+                      <FieldError>{formState.errors.phoneNumber}</FieldError>
+                    )}
+                  </Field>
+                  <Field>
+                    <FieldLabel className="block text-sm font-medium mb-2">Message</FieldLabel>
+                    <Textarea
+                      placeholder="Tell me about your goals..."
+                      rows={4}
+                      name='message'
+                      disabled={pending}
+                      className="w-full px-4 py-2 rounded-md bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                    />
+                    {formState.errors?.message && (
+                      <FieldError>{formState.errors.message}</FieldError>
+                    )}
+                  </Field>
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Send Message
+                  </Button>
+                </FieldGroup>
+              </Form>
             </div>
           </div>
         </div>
